@@ -1,3 +1,5 @@
+import operator
+
 import keyboard
 import win32api
 import win32con
@@ -5,10 +7,7 @@ from pyautogui import *
 
 from checkPicExits import check_pic_exist
 
-target_region = (753, 153, 1166, 886)
-
 dictionary_name = 'meituan_imgs'
-# dictionary_name = 'dingdong_imgs'
 pic_list = os.listdir(dictionary_name)
 
 
@@ -18,7 +17,7 @@ def click(x, y):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
 
-def check_keyboard():
+def check_stop_keyboard():
     if keyboard.is_pressed('q'):
         return False
     if keyboard.is_pressed('enter'):
@@ -26,59 +25,36 @@ def check_keyboard():
     return True
 
 
-def auto_supplement_inventory(pic_result_list):
-    print('购物车已空,开始自动寻找库存')
-    cur_pic_info = [x[1] for x in pic_result_list if 'index' in x[0]][0]
-    click(cur_pic_info[0], cur_pic_info[1])  # 最后1张图的坐标
-
-
 if __name__ == '__main__':
-    s = '2022-04-21 05:50:00'
-    while True:
-        current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-        if current_time < s:
-            print("时间未到 休息5分钟", current_time)
-            time.sleep(300)
-        else:
-            print('开始自动抢菜抢菜', current_time)
-            break
-
-    while check_keyboard():
-        pic_result_list = []
+    while check_stop_keyboard():
+        pic_obj_list = []
         for pic in pic_list:
             result = check_pic_exist(pic_name=pic, confidence=0.8,
                                      dictionary_name=dictionary_name)  # confidence 为图片识别的速度 调低会导致识别不到
             if result:
-                pic_result_list.append((pic, result))
+                spl_pic = pic.split('-')
+                num = spl_pic[0]
+                pic_name = spl_pic[1].split('.')[0]
+                pic_obj_list.append({
+                    'num': int(num),
+                    'pic_name': pic_name,
+                    'x_index': result[0],
+                    'y_index': result[1],
+                })
 
-        if len(pic_result_list) > 0:
-            print(pic_result_list)
+        if len(pic_obj_list) > 0:
+            pic_obj_list = sorted(pic_obj_list, key=operator.itemgetter('num'), reverse=True)
             # 获取到成功的图片文案
-            if 'final' in ','.join([x[0] for x in pic_result_list]):
+            img_append_str = ','.join([x.get('pic_name') for x in pic_obj_list])
+            if 'final' in img_append_str:
                 print('抢单成功!')
                 file_name = 'sing.mp3'
                 os.system(file_name)
                 break
-            elif 'full' in ','.join([x[0] for x in pic_result_list]):
-                print('今日约满!刷可新派送时间!')
-                cur_pic_info = [x[1] for x in pic_result_list if '0-back' in x[0]][0]
-                click(cur_pic_info[0], cur_pic_info[1])  # 最后1张图的坐标
-
-            elif 'timeslot' in ','.join([x[0] for x in pic_result_list]):
-                cur_pic_info = [x[1] for x in pic_result_list if 'timeslot' in x[0]][0]
-                click(cur_pic_info[0], cur_pic_info[1])  # 最后1张图的坐标
-                click(cur_pic_info[0], cur_pic_info[1] + 55)
-                # sleep(0.3)
-                # sleep(0.3)
-                click(cur_pic_info[0], cur_pic_info[1] + 110)
-                # sleep(0.3)
-                click(cur_pic_info[0], cur_pic_info[1] + 160)
-                # sleep(0.3)
             else:
-                cur_pic_info = [x[1] for x in pic_result_list if
-                                int(x[0].split('-')[0]) == max([int(y[0].split('-')[0]) for y in pic_result_list])][0]
-                click(cur_pic_info[0], cur_pic_info[1])
-                sleep(0.1)
+                cur_pic_info = pic_obj_list[0]
+                click(cur_pic_info.get('x_index'), cur_pic_info.get('y_index'))
+                sleep(0.5)  # 这里识别过快会导致不停的全选
         else:
             print('无法获取到对应图片')
             time.sleep(1)
