@@ -1,4 +1,5 @@
 import operator
+import time
 
 import keyboard
 import win32api
@@ -26,6 +27,16 @@ def check_stop_keyboard():
 
 
 if __name__ == '__main__':
+    s = time.strftime("%Y-%m-%d  05:50:00")
+    while True:
+        current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+        if current_time < s:
+            print("时间未到 休息5分钟", current_time)
+            time.sleep(300)
+        else:
+            print('开始自动抢菜抢菜', current_time)
+            break
+
     while check_stop_keyboard():
         pic_obj_list = []
         for pic in pic_list:
@@ -53,6 +64,7 @@ if __name__ == '__main__':
                 break
             else:
                 cur_pic_info = pic_obj_list[0]
+                print(cur_pic_info)
                 click(cur_pic_info.get('x_index'), cur_pic_info.get('y_index'))
                 sleep(0.5)  # 这里识别过快会导致不停的全选
         else:
