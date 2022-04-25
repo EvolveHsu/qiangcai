@@ -27,7 +27,8 @@ def check_stop_keyboard():
 
 
 if __name__ == '__main__':
-    s = time.strftime("%Y-%m-%d  05:50:00")
+    s = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d 05:50:00')
+    print('设定开始时间: ', s)
     while True:
         current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         if current_time < s:
@@ -54,6 +55,7 @@ if __name__ == '__main__':
                 })
 
         if len(pic_obj_list) > 0:
+            print(pic_obj_list)
             pic_obj_list = sorted(pic_obj_list, key=operator.itemgetter('num'), reverse=True)
             # 获取到成功的图片文案
             img_append_str = ','.join([x.get('pic_name') for x in pic_obj_list])
